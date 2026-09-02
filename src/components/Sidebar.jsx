@@ -24,13 +24,40 @@ export default function Sidebar() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // File size validation (15MB limit from backend)
+    const maxSizeMB = 15
+    const fileSizeMB = file.size / (1024 * 1024)
+    
+    if (fileSizeMB > maxSizeMB) {
+      setError(`File too large (${fileSizeMB.toFixed(1)}MB). Maximum size is ${maxSizeMB}MB.`)
+      return
+    }
+
+    // Warning for large files that might have processing issues
+    if (fileSizeMB > 0.5) {
+      const proceed = confirm(
+        `This PDF is ${fileSizeMB.toFixed(1)}MB. Large documents may take longer to process and could encounter API limits. Continue?`
+      )
+      if (!proceed) {
+        e.target.value = ''
+        return
+      }
+    }
+
     setUploading(true)
     setError(null)
     try {
       await uploadDocument(file)
       await refreshDocuments()
     } catch (err) {
-      setError(err.message)
+      // Provide more user-friendly error messages
+      if (err.message.includes('too large') || err.message.includes('quota')) {
+        setError('This document is too complex for processing. Try a smaller PDF or contact support.')
+      } else if (err.message.includes('Invalid content')) {
+        setError('This PDF could not be processed. It may be corrupted or password-protected.')
+      } else {
+        setError(err.message)
+      }
     } finally {
       setUploading(false)
       e.target.value = '' // allows re-selecting the same file later
