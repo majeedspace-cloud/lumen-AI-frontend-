@@ -51,6 +51,111 @@
   margin: 0 0 16px;
 }
 
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.new-chat-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+  background: var(--accent);
+  color: var(--bg, #0a0a0a);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+.new-chat-btn:hover {
+  transform: translateY(-1px);
+}
+
+.sidebar-section {
+  margin-bottom: 24px;
+}
+
+.sidebar-section-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin: 0 0 12px;
+}
+
+.session-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session-empty {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  padding: 10px;
+  font-style: italic;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bubble-assistant);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.session-item:hover {
+  background: var(--bubble-user);
+}
+.session-item.session-active {
+  background: var(--accent);
+  color: var(--bg, #0a0a0a);
+}
+
+.session-name {
+  flex: 1;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.session-item:hover .session-actions {
+  opacity: 1;
+}
+
+.session-rename,
+.session-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.session-rename:hover,
+.session-delete:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.session-item.session-active .session-rename:hover,
+.session-item.session-active .session-delete:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
 .upload-btn {
   width: 100%;
   padding: 10px;

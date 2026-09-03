@@ -25,6 +25,11 @@ export function getSessionId() {
   return id
 }
 
+// Allow switching to a different session
+export function setSessionId(sessionId) {
+  localStorage.setItem('rag_session_id', sessionId)
+}
+
 export async function uploadDocument(file) {
   const formData = new FormData()
   formData.append('session_id', getSessionId())
@@ -53,6 +58,53 @@ export async function deleteDocument(filename) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.detail || `Delete failed (${res.status})`)
+  }
+  return res.json()
+}
+
+// ---------------- Session Management Functions ----------------
+
+export async function listSessions() {
+  const res = await fetch(`${API_BASE}/sessions`, { headers: authHeaders() })
+  if (!res.ok) throw new Error(`Failed to load sessions (${res.status})`)
+  const data = await res.json()
+  return data.sessions
+}
+
+export async function createSession(name = 'New Chat') {
+  const res = await fetch(`${API_BASE}/sessions`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Failed to create session (${res.status})`)
+  }
+  return res.json()
+}
+
+export async function renameSession(sessionId, newName) {
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}/rename`, {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ new_name: newName }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Failed to rename session (${res.status})`)
+  }
+  return res.json()
+}
+
+export async function deleteSession(sessionId) {
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Failed to delete session (${res.status})`)
   }
   return res.json()
 }
