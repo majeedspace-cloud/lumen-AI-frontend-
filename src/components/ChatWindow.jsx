@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { streamChat } from '../api.js'
+import { streamChat, getSessionId } from '../api.js'
 import LumenLogo from './LumenLogo.jsx'
 
 export default function ChatWindow() {
@@ -9,11 +9,24 @@ export default function ChatWindow() {
   const [input, setInput] = useState('')
   const [statusText, setStatusText] = useState(null) // the "Searching your document..." line
   const [isStreaming, setIsStreaming] = useState(false)
+  const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, statusText])
+
+  // Check for session changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSessionId = getSessionId()
+      if (newSessionId !== currentSessionId) {
+        setCurrentSessionId(newSessionId)
+        setMessages([]) // Clear messages when session changes
+      }
+    }, 500)
+    return () => clearInterval(interval)
+  }, [currentSessionId])
 
   async function handleSend() {
     const query = input.trim()
