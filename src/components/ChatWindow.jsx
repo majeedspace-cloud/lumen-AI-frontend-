@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { streamChat, getSessionId } from '../api.js'
+import { streamChat, getSessionId, getSessionDetail, uploadDocument } from '../api.js'
 import LumenLogo from './LumenLogo.jsx'
 
 export default function ChatWindow() {
@@ -10,11 +10,28 @@ export default function ChatWindow() {
   const [statusText, setStatusText] = useState(null) // the "Searching your document..." line
   const [isStreaming, setIsStreaming] = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
+  const [showUpload, setShowUpload] = useState(false)
+  const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, statusText])
+
+  // Load chat history when session changes
+  const loadSessionHistory = async (sessionId) => {
+    try {
+      const sessionDetail = await getSessionDetail(sessionId)
+      setMessages(sessionDetail.chat_history.map(msg => ({
+        role: msg.role,
+        text: msg.content,
+        sources: msg.sources || null
+      })))
+    } catch (err) {
+      console.error('Failed to load session history:', err)
+      setMessages([]) // Clear messages if load fails
+    }
+  }
 
   // Check for session changes
   useEffect(() => {
@@ -22,7 +39,7 @@ export default function ChatWindow() {
       const newSessionId = getSessionId()
       if (newSessionId !== currentSessionId) {
         setCurrentSessionId(newSessionId)
-        setMessages([]) // Clear messages when session changes
+        loadSessionHistory(newSessionId) // Load chat history when switching
       }
     }, 500)
     return () => clearInterval(interval)
@@ -85,6 +102,58 @@ export default function ChatWindow() {
     })
   }
 
+  async function handleFileUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // File size validation
+    const maxSizeMB = 15
+    const fileSizeMB = file.size / (1024 * 1024)
+    
+    if (fileSizeMB > maxSizeMB) {
+      alert(`File too large (${fileSizeMB.toFixed(1)}MB). Maximum size is ${maxSizeMB}MB.`)
+      return
+    }
+
+    // Warning for large files
+    if (fileSizeMB > 0.5) {
+      const proceed = confirm(
+        `This PDF is ${fileSizeMB.toFixed(1)}MB. Large documents may take longer to process. Continue?`
+      )
+      if (!proceed) {
+        e.target.value = ''
+        return
+      }
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('session_id', getSessionId())
+      formData.append('file', file)
+
+      const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000') + '/api/v1'
+      const API_KEY = import.meta.env.VITE_API_KEY
+
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        headers: { 'X-API-Key': API_KEY },
+        body: formData
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.detail || `Upload failed (${res.status})`)
+      }
+
+      const result = await res.json()
+      alert(`File uploaded successfully: ${result.message}`)
+    } catch (err) {
+      alert(`Upload failed: ${err.message}`)
+    } finally {
+      e.target.value = ''
+    }
+  }
+
   function handleKeyDown(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -136,6 +205,21 @@ export default function ChatWindow() {
       </div>
 
       <div className="chat-input-row">
+        <div className="chat-input-actions">
+          <button 
+            className="chat-action-btn" 
+            onClick={() => fileInputRef.current?.click()}
+            title="Upload PDF"
+          >
+            📎
+          </button>
+          <button 
+            className="chat-action-btn" 
+            title="Web Search"
+          >
+            🌐
+          </button>
+        </div>
         <input
           className="chat-input"
           type="text"
@@ -148,6 +232,13 @@ export default function ChatWindow() {
         <button className="chat-send-btn" onClick={handleSend} disabled={isStreaming || !input.trim()}>
           Send
         </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf"
+          onChange={handleFileUpload}
+          style={{ display: 'none' }}
+        />
       </div>
     </main>
   )

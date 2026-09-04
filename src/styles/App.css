@@ -378,6 +378,31 @@
   padding: 16px 24px;
   border-top: 1px solid var(--panel-border);
   transition: border-color 0.4s ease;
+  align-items: center;
+}
+
+.chat-input-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: var(--bubble-assistant);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.chat-action-btn:hover {
+  background: var(--bubble-user);
+  border-color: var(--accent);
 }
 
 .chat-input {

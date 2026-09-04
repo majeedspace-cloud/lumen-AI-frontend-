@@ -109,6 +109,12 @@ export async function deleteSession(sessionId) {
   return res.json()
 }
 
+export async function getSessionDetail(sessionId) {
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}`, { headers: authHeaders() })
+  if (!res.ok) throw new Error(`Failed to load session details (${res.status})`)
+  return res.json()
+}
+
 /**
  * Streams a chat response. Instead of returning a value, this calls your
  * callback functions as events arrive — because with streaming, there's
