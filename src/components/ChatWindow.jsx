@@ -85,6 +85,8 @@ export default function ChatWindow() {
       onDone: () => {
         setIsStreaming(false)
         setStatusText(null)
+        // Refresh session list after chat to show updated name from auto-naming
+        window.dispatchEvent(new CustomEvent('chat-completed', { detail: { sessionId: getSessionId() } }))
       },
 
       onError: (message) => {
@@ -212,12 +214,6 @@ export default function ChatWindow() {
             title="Upload PDF"
           >
             📎
-          </button>
-          <button 
-            className="chat-action-btn" 
-            title="Web Search"
-          >
-            🌐
           </button>
         </div>
         <input
