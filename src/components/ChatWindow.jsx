@@ -33,17 +33,17 @@ export default function ChatWindow() {
     }
   }
 
-  // Check for session changes
+  // Listen for session changes via event (proper way)
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newSessionId = getSessionId()
-      if (newSessionId !== currentSessionId) {
-        setCurrentSessionId(newSessionId)
-        loadSessionHistory(newSessionId) // Load chat history when switching
-      }
-    }, 500)
-    return () => clearInterval(interval)
-  }, [currentSessionId])
+    const handleSessionChange = (event) => {
+      const { sessionId } = event.detail
+      setCurrentSessionId(sessionId)
+      loadSessionHistory(sessionId)
+    }
+
+    window.addEventListener('session-changed', handleSessionChange)
+    return () => window.removeEventListener('session-changed', handleSessionChange)
+  }, [])
 
   async function handleSend() {
     const query = input.trim()

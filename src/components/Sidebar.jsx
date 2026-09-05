@@ -109,15 +109,6 @@ export default function Sidebar() {
     }
   }
 
-  async function handleDelete(filename) {
-    try {
-      await deleteDocument(filename)
-      await refreshDocuments()
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
