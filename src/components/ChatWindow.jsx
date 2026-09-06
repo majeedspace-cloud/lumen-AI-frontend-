@@ -13,6 +13,7 @@ export default function ChatWindow() {
   const [showUpload, setShowUpload] = useState(false)
   const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null)
+  const historyRequestRef = useRef(0)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -20,14 +21,17 @@ export default function ChatWindow() {
 
   // Load chat history when session changes
   const loadSessionHistory = async (sessionId) => {
+    const requestId = ++historyRequestRef.current
     try {
       const sessionDetail = await getSessionDetail(sessionId)
+      if (requestId !== historyRequestRef.current) return
       setMessages(sessionDetail.chat_history.map(msg => ({
         role: msg.role,
         text: msg.content,
         sources: msg.sources || null
       })))
     } catch (err) {
+      if (requestId !== historyRequestRef.current) return
       console.error('Failed to load session history:', err)
       setMessages([]) // Clear messages if load fails
     }
@@ -38,6 +42,8 @@ export default function ChatWindow() {
     const handleSessionChange = (event) => {
       const { sessionId } = event.detail
       setCurrentSessionId(sessionId)
+      setMessages([])
+      setStatusText(null)
       loadSessionHistory(sessionId)
     }
 

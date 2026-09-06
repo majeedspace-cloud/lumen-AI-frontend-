@@ -1,32 +1,23 @@
-import { useEffect, useRef, useState } from 'react'
-import { listDocuments, deleteDocument, listSessions, createSession, renameSession, deleteSession, setSessionId, getSessionId, getSessionDetail } from '../api.js'
+import { useEffect, useState } from 'react'
+import { listSessions, renameSession, deleteSession, setSessionId, getSessionId } from '../api.js'
 
 export default function Sidebar() {
-  const [documents, setDocuments] = useState([])
   const [sessions, setSessions] = useState([])
   const [error, setError] = useState(null)
   const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
-
-  async function refreshDocuments() {
-    try {
-      const docs = await listDocuments()
-      setDocuments(docs)
-    } catch (err) {
-      setError(err.message)
-    }
-  }
 
   async function refreshSessions() {
     try {
       const sessionList = await listSessions()
       setSessions(sessionList)
+      return sessionList
     } catch (err) {
       setError(err.message)
+      return []
     }
   }
 
   useEffect(() => {
-    refreshDocuments()
     refreshSessions()
 
     // Listen for chat completion to refresh session list (for auto-naming)
@@ -38,25 +29,23 @@ export default function Sidebar() {
     return () => window.removeEventListener('chat-completed', handleChatCompleted)
   }, [])
 
-  async function handleNewChat() {
-    try {
-      const newSession = await createSession('New Chat')
-      setSessionId(newSession.session_id)
-      setCurrentSessionId(newSession.session_id)
-      setDocuments([]) // Clear documents for new session
-      setError(null)
-      await refreshSessions()
-    } catch (err) {
-      setError(err.message)
-    }
+function handleNewChat() {
+    // Generate a local session ID without pinging the backend API yet
+    const localSessionId = crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`
+    
+    // Store in localStorage & component state
+    setSessionId(localSessionId)
+    setCurrentSessionId(localSessionId)
+    setError(null)
+    
+    // Notify ChatWindow to clear old messages
+    window.dispatchEvent(new CustomEvent('session-changed', { detail: { sessionId: localSessionId } }))
   }
 
   async function handleSwitchSession(sessionId) {
     try {
       setSessionId(sessionId)
       setCurrentSessionId(sessionId)
-      setDocuments([]) // Clear documents, will refresh for new session
-      await refreshDocuments()
       setError(null)
       // Signal to ChatWindow to load chat history
       window.dispatchEvent(new CustomEvent('session-changed', { detail: { sessionId } }))
@@ -82,30 +71,20 @@ export default function Sidebar() {
     if (confirm('Are you sure you want to delete this session? This cannot be undone.')) {
       try {
         await deleteSession(sessionId)
-        // If we deleted the current session, switch to another one or create new
+        const updatedSessions = await refreshSessions()
+
+        // If the active session was deleted, replace it with another session or a blank chat.
         if (sessionId === currentSessionId) {
-          const remainingSessions = sessions.filter(s => s.session_id !== sessionId)
-          if (remainingSessions.length > 0) {
-            handleSwitchSession(remainingSessions[0].session_id)
+          if (updatedSessions.length > 0) {
+            await handleSwitchSession(updatedSessions[0].session_id)
           } else {
             handleNewChat()
           }
-        } else {
-          await refreshSessions()
         }
         setError(null)
       } catch (err) {
         setError(err.message)
       }
-    }
-  }
-
-  async function handleDelete(filename) {
-    try {
-      await deleteDocument(filename)
-      await refreshDocuments()
-    } catch (err) {
-      setError(err.message)
     }
   }
 
@@ -160,32 +139,7 @@ export default function Sidebar() {
         </ul>
       </div>
 
-      <div className="sidebar-section">
-        <h3 className="sidebar-section-title">Documents</h3>
-
-        {error && <p className="sidebar-error">{error}</p>}
-
-        <ul className="document-list">
-          {documents.length === 0 && (
-            <li className="document-empty">No documents yet — upload a PDF to get started.</li>
-          )}
-          {documents.map((doc) => (
-            <li key={doc.filename} className="document-item">
-              <span className="document-name" title={doc.filename}>
-                {doc.filename}
-              </span>
-              <span className="document-chunks">{doc.chunks} chunks</span>
-              <button
-                className="document-delete"
-                onClick={() => handleDelete(doc.filename)}
-                aria-label={`Delete ${doc.filename}`}
-              >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {error && <p className="sidebar-error">{error}</p>}
     </aside>
   )
 }
