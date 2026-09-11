@@ -30,6 +30,17 @@ export function setSessionId(sessionId) {
   localStorage.setItem('rag_session_id', sessionId)
 }
 
+// This ID identifies the browser across disposable chat sessions. It is not
+// an authentication credential and must not be treated as one by the backend.
+export function getDeviceId() {
+  let id = localStorage.getItem('lumen_device_id')
+  if (!id) {
+    id = crypto.randomUUID()
+    localStorage.setItem('lumen_device_id', id)
+  }
+  return id
+}
+
 export async function uploadDocument(file) {
   const formData = new FormData()
   formData.append('session_id', getSessionId())
@@ -115,6 +126,31 @@ export async function getSessionDetail(sessionId) {
   return res.json()
 }
 
+export async function getMemory() {
+  const res = await fetch(`${API_BASE}/memory/${getDeviceId()}`, { headers: authHeaders() })
+  if (!res.ok) throw new Error(`Failed to load memory (${res.status})`)
+  return res.json()
+}
+
+export async function setMemoryEnabled(enabled) {
+  const res = await fetch(`${API_BASE}/memory/${getDeviceId()}`, {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ enabled }),
+  })
+  if (!res.ok) throw new Error(`Failed to update memory (${res.status})`)
+  return res.json()
+}
+
+export async function clearMemory() {
+  const res = await fetch(`${API_BASE}/memory/${getDeviceId()}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  if (!res.ok) throw new Error(`Failed to clear memory (${res.status})`)
+  return res.json()
+}
+
 /**
  * Streams a chat response. Instead of returning a value, this calls your
  * callback functions as events arrive — because with streaming, there's
@@ -135,7 +171,7 @@ export async function streamChat(query, { onStatus, onSources, onToken, onDone, 
     const res = await fetch(`${API_BASE}/chat/stream`, {
       method: 'POST',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ session_id: getSessionId(), query }),
+      body: JSON.stringify({ session_id: getSessionId(), device_id: getDeviceId(), query }),
     })
     if (!res.ok || !res.body) {
       throw new Error(`Chat request failed (${res.status})`)

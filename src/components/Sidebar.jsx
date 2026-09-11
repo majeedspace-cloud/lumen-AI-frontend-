@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react'
-import { listSessions, renameSession, deleteSession, setSessionId, getSessionId } from '../api.js'
+import {
+  listSessions,
+  renameSession,
+  deleteSession,
+  setSessionId,
+  getSessionId,
+  getMemory,
+  setMemoryEnabled,
+  clearMemory,
+} from '../api.js'
 
 export default function Sidebar() {
   const [sessions, setSessions] = useState([])
   const [error, setError] = useState(null)
   const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
+  const [memory, setMemory] = useState(null)
+  const [memoryError, setMemoryError] = useState(null)
 
   async function refreshSessions() {
     try {
@@ -19,15 +30,46 @@ export default function Sidebar() {
 
   useEffect(() => {
     refreshSessions()
+    refreshMemory()
 
     // Listen for chat completion to refresh session list (for auto-naming)
     const handleChatCompleted = () => {
       refreshSessions()
+      refreshMemory()
     }
 
     window.addEventListener('chat-completed', handleChatCompleted)
     return () => window.removeEventListener('chat-completed', handleChatCompleted)
   }, [])
+
+  async function refreshMemory() {
+    try {
+      setMemory(await getMemory())
+      setMemoryError(null)
+    } catch (err) {
+      setMemoryError(err.message)
+    }
+  }
+
+  async function handleMemoryToggle() {
+    try {
+      const updated = await setMemoryEnabled(!memory?.enabled)
+      setMemory(updated)
+      setMemoryError(null)
+    } catch (err) {
+      setMemoryError(err.message)
+    }
+  }
+
+  async function handleClearMemory() {
+    if (!confirm('Clear everything Lumen remembers about you?')) return
+    try {
+      await clearMemory()
+      await refreshMemory()
+    } catch (err) {
+      setMemoryError(err.message)
+    }
+  }
 
 function handleNewChat() {
     // Generate a local session ID without pinging the backend API yet
@@ -137,6 +179,33 @@ function handleNewChat() {
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="sidebar-section memory-section">
+        <div className="memory-heading-row">
+          <h3 className="sidebar-section-title">Memory</h3>
+          {memory && (
+            <button className="memory-toggle" onClick={handleMemoryToggle}>
+              {memory.enabled ? 'On' : 'Off'}
+            </button>
+          )}
+        </div>
+        {memoryError && <p className="sidebar-error">{memoryError}</p>}
+        {memory?.enabled && Object.keys(memory.facts).length > 0 ? (
+          <>
+            <ul className="memory-list">
+              {Object.entries(memory.facts).map(([key, value]) => (
+                <li key={key} className="memory-item">
+                  <span>{key.replaceAll('_', ' ')}</span>
+                  <strong>{value}</strong>
+                </li>
+              ))}
+            </ul>
+            <button className="memory-clear" onClick={handleClearMemory}>Clear memory</button>
+          </>
+        ) : (
+          <p className="memory-empty">{memory?.enabled === false ? 'Memory is off.' : 'Nothing remembered yet.'}</p>
+        )}
       </div>
 
       {error && <p className="sidebar-error">{error}</p>}

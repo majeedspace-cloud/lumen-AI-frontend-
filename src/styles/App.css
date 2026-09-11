@@ -85,6 +85,65 @@
   margin: 0 0 12px;
 }
 
+.memory-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.memory-heading-row .sidebar-section-title {
+  margin-bottom: 0;
+}
+
+.memory-toggle,
+.memory-clear {
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--bubble-assistant);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+}
+
+.memory-toggle:hover,
+.memory-clear:hover {
+  border-color: var(--accent);
+  background: var(--bubble-user);
+}
+
+.memory-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--bubble-assistant);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.memory-item strong {
+  color: var(--text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.memory-empty {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
 .session-list {
   list-style: none;
   padding: 0;
