@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { streamChat, getSessionId, getSessionDetail, uploadDocument } from '../api.js'
+import { streamChat, getSessionId, getSessionDetail } from '../api.js'
 import LumenLogo from './LumenLogo.jsx'
 
 export default function ChatWindow() {
@@ -10,10 +10,10 @@ export default function ChatWindow() {
   const [statusText, setStatusText] = useState(null) // the "Searching your document..." line
   const [isStreaming, setIsStreaming] = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
-  const [showUpload, setShowUpload] = useState(false)
   const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null)
   const historyRequestRef = useRef(0)
+  const chatRequestRef = useRef(0)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -41,14 +41,20 @@ export default function ChatWindow() {
   useEffect(() => {
     const handleSessionChange = (event) => {
       const { sessionId } = event.detail
+      chatRequestRef.current += 1
       setCurrentSessionId(sessionId)
       setMessages([])
       setStatusText(null)
+      setIsStreaming(false)
       loadSessionHistory(sessionId)
     }
 
     window.addEventListener('session-changed', handleSessionChange)
     return () => window.removeEventListener('session-changed', handleSessionChange)
+  }, [])
+
+  useEffect(() => {
+    loadSessionHistory(currentSessionId)
   }, [])
 
   async function handleSend() {
@@ -58,6 +64,7 @@ export default function ChatWindow() {
     setInput('')
     setIsStreaming(true)
     setStatusText(null)
+    const requestId = ++chatRequestRef.current
 
     // Add the user's message, and an empty placeholder assistant message
     // that we'll fill in token-by-token as the stream arrives.
@@ -68,9 +75,12 @@ export default function ChatWindow() {
     ])
 
     await streamChat(query, {
-      onStatus: (text) => setStatusText(text),
+      onStatus: (text) => {
+        if (requestId === chatRequestRef.current) setStatusText(text)
+      },
 
       onSources: (sources) => {
+        if (requestId !== chatRequestRef.current) return
         setMessages((prev) => {
           const updated = [...prev]
           updated[updated.length - 1] = { ...updated[updated.length - 1], sources }
@@ -79,6 +89,7 @@ export default function ChatWindow() {
       },
 
       onToken: (chunk) => {
+        if (requestId !== chatRequestRef.current) return
         setStatusText(null) // real text has started, hide the "thinking" line
         setMessages((prev) => {
           const updated = [...prev]
@@ -89,6 +100,7 @@ export default function ChatWindow() {
       },
 
       onDone: () => {
+        if (requestId !== chatRequestRef.current) return
         setIsStreaming(false)
         setStatusText(null)
         // Refresh session list after chat to show updated name from auto-naming
@@ -96,6 +108,7 @@ export default function ChatWindow() {
       },
 
       onError: (message) => {
+        if (requestId !== chatRequestRef.current) return
         setIsStreaming(false)
         setStatusText(null)
         setMessages((prev) => {
