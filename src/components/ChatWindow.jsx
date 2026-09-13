@@ -10,6 +10,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
   const [statusText, setStatusText] = useState(null) // the "Searching your document..." line
   const [isStreaming, setIsStreaming] = useState(false)
   const [uploadingFileName, setUploadingFileName] = useState(null)
+  const [toast, setToast] = useState(null)
   const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
   const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -19,6 +20,13 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, statusText])
+
+  // Auto-dismiss toast notifications after a few seconds
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   // Load chat history when session changes
   const loadSessionHistory = async (sessionId) => {
@@ -133,19 +141,17 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
     const fileSizeMB = file.size / (1024 * 1024)
 
     if (fileSizeMB > maxSizeMB) {
-      alert(`File too large (${fileSizeMB.toFixed(1)}MB). Maximum size is ${maxSizeMB}MB.`)
+      setToast({ type: 'error', message: `File too large (${fileSizeMB.toFixed(1)}MB). Maximum size is ${maxSizeMB}MB.` })
+      e.target.value = ''
       return
     }
 
-    // Warning for large files
+    // Heads-up for large files (no blocking popup — just note it and proceed)
     if (fileSizeMB > 0.5) {
-      const proceed = confirm(
-        `This PDF is ${fileSizeMB.toFixed(1)}MB. Large documents may take longer to process. Continue?`
-      )
-      if (!proceed) {
-        e.target.value = ''
-        return
-      }
+      setToast({
+        type: 'info',
+        message: `${file.name} is ${fileSizeMB.toFixed(1)}MB — large documents may take longer to process.`,
+      })
     }
 
     try {
@@ -169,9 +175,11 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
       }
 
       const result = await res.json()
-      alert(`File uploaded successfully: ${result.message}`)
+      setToast({ type: 'success', message: result.message || 'File uploaded successfully.' })
+      // Tell the sidebar to refresh its document list
+      window.dispatchEvent(new CustomEvent('documents-changed'))
     } catch (err) {
-      alert(`Upload failed: ${err.message}`)
+      setToast({ type: 'error', message: `Upload failed: ${err.message}` })
     } finally {
       setUploadingFileName(null)
       e.target.value = ''
@@ -187,7 +195,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
 
   return (
     <main
-      className="flex-1 flex flex-col relative overflow-hidden rounded-3xl frosted-glass-panel rgb-border"
+      className="flex-1 flex flex-col relative overflow-hidden rounded-3xl frosted-glass-panel"
       data-purpose="chat-stream-workspace"
     >
       {!sidebarOpen && (
@@ -289,7 +297,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
       {/* Bottom input section */}
       <div className="p-4 pt-2 flex-shrink-0" data-purpose="chat-input-controls">
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-white/80 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 rgb-border space-x-3 transition-shadow">
+          <div className="flex items-center px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-white/80 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 soft-glow space-x-3 transition-shadow">
             <button
               onClick={() => fileInputRef.current?.click()}
               title="Attach a PDF document"
@@ -356,6 +364,27 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
           </div>
         </div>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div
+          role="status"
+          className="toast-in absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-800/95 text-slate-800 dark:text-slate-100 text-sm font-medium shadow-xl border border-white/80 dark:border-slate-700 backdrop-blur"
+        >
+          <span
+            className={`material-symbols-outlined text-lg leading-none ${
+              toast.type === 'success'
+                ? 'text-emerald-500'
+                : toast.type === 'error'
+                  ? 'text-rose-500'
+                  : 'text-sky-500'
+            }`}
+          >
+            {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'}
+          </span>
+          <span className="max-w-[320px] truncate">{toast.message}</span>
+        </div>
+      )}
     </main>
   )
 }

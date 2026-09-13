@@ -30,10 +30,10 @@ export default function App() {
   return (
     <>
       <AmbientBackground />
-      <div className="app-shell relative z-10 flex flex-col h-screen max-w-[1440px] mx-auto px-4 py-3 md:px-6 md:py-4">
+      <div className="app-shell soft-glow relative z-10 flex flex-col h-screen max-w-[1440px] mx-auto px-4 py-3 md:px-6 md:py-4">
         {/* Top bar */}
         <header
-          className="flex items-center justify-between h-14 px-6 rounded-2xl frosted-glass-panel rgb-border mb-3.5 flex-shrink-0"
+          className="flex items-center justify-between h-14 px-6 rounded-2xl frosted-glass-panel mb-3.5 flex-shrink-0"
           data-purpose="top-navigation"
         >
           <div className="flex items-center space-x-2.5">

@@ -69,6 +69,31 @@ html.dark .prismatic-subtle {
     0 1px 2px rgba(255, 255, 255, 0.05) inset;
 }
 
+/* ---------------- Static soft glow ----------------
+   A calm, NON-animated ring + halo for the outer frame, the prompt box and
+   the New Chat button. Bluish in light mode, soft green in dark mode.
+   Implemented on a pseudo-element so it composes with frosted-glass-panel's
+   own box-shadow instead of overriding it. This is the "resting" look;
+   the rotating RGB ring is reserved for the loading answer box only. */
+.soft-glow {
+  position: relative;
+}
+.soft-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.35),
+    0 0 20px -2px rgba(56, 189, 248, 0.5);
+  pointer-events: none;
+}
+html.dark .soft-glow::before {
+  box-shadow:
+    0 0 0 1px rgba(74, 222, 128, 0.3),
+    0 0 20px -2px rgba(74, 222, 128, 0.45);
+}
+
 /* ---------------- Markdown body (assistant answers) ---------------- */
 .markdown-body p {
   margin: 0 0 8px;
@@ -183,4 +208,19 @@ html.dark .markdown-body a {
 
 @keyframes rgbGlowRotate {
   to { --rgb-angle: 360deg; }
+}
+
+/* ---------------- Toast notification ---------------- */
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.toast-in {
+  animation: toastIn 0.25s ease-out;
 }

@@ -8,6 +8,8 @@ import {
   getMemory,
   setMemoryEnabled,
   clearMemory,
+  listDocuments,
+  deleteDocument,
 } from '../api.js'
 
 const dayMs = 24 * 60 * 60 * 1000
@@ -41,6 +43,27 @@ export default function Sidebar({ onClose }) {
   const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
   const [memory, setMemory] = useState(null)
   const [memoryError, setMemoryError] = useState(null)
+  const [documents, setDocuments] = useState([])
+  const [docError, setDocError] = useState(null)
+
+  async function refreshDocuments() {
+    try {
+      setDocuments(await listDocuments())
+      setDocError(null)
+    } catch (err) {
+      setDocError(err.message)
+    }
+  }
+
+  async function handleDeleteDocument(filename) {
+    try {
+      await deleteDocument(filename)
+      await refreshDocuments()
+      setDocError(null)
+    } catch (err) {
+      setDocError(err.message)
+    }
+  }
 
   async function refreshSessions() {
     try {
@@ -56,6 +79,7 @@ export default function Sidebar({ onClose }) {
   useEffect(() => {
     refreshSessions()
     refreshMemory()
+    refreshDocuments()
 
     // Listen for chat completion to refresh session list (for auto-naming)
     const handleChatCompleted = () => {
@@ -63,7 +87,8 @@ export default function Sidebar({ onClose }) {
       refreshMemory()
     }
 
-    window.addEventListener('chat-completed', handleChatCompleted)
+    // Docs change when the session changes or a file is uploaded elsewhere.
+    const handleDocumentsChanged = () => refreshDocuments()
 
     // Ctrl/Cmd+K starts a new chat — matches the "Ctrl K" hint on the button
     const handleGlobalKeyDown = (e) => {
@@ -72,10 +97,16 @@ export default function Sidebar({ onClose }) {
         handleNewChat()
       }
     }
+
+    window.addEventListener('chat-completed', handleChatCompleted)
+    window.addEventListener('session-changed', handleDocumentsChanged)
+    window.addEventListener('documents-changed', handleDocumentsChanged)
     window.addEventListener('keydown', handleGlobalKeyDown)
 
     return () => {
       window.removeEventListener('chat-completed', handleChatCompleted)
+      window.removeEventListener('session-changed', handleDocumentsChanged)
+      window.removeEventListener('documents-changed', handleDocumentsChanged)
       window.removeEventListener('keydown', handleGlobalKeyDown)
     }
   }, [])
@@ -172,7 +203,7 @@ export default function Sidebar({ onClose }) {
 
   return (
     <aside
-      className="w-[290px] flex-shrink-0 flex flex-col rounded-3xl frosted-glass-panel rgb-border p-4 overflow-hidden"
+      className="w-[290px] flex-shrink-0 flex flex-col rounded-3xl frosted-glass-panel p-4 overflow-hidden"
       data-purpose="sidebar-navigation"
     >
       {/* Header row + collapse */}
@@ -192,7 +223,7 @@ export default function Sidebar({ onClose }) {
       {/* New Chat trigger */}
       <button
         onClick={handleNewChat}
-        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white/85 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm border border-white dark:border-slate-700 shadow-sm transition-all duration-150 group"
+        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white/85 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm border border-white dark:border-slate-700 shadow-sm transition-all duration-150 group soft-glow"
         type="button"
       >
         <div className="flex items-center space-x-2">
@@ -224,15 +255,18 @@ export default function Sidebar({ onClose }) {
               return (
                 <div
                   key={session.session_id}
-                  onClick={() => handleSwitchSession(session.session_id)}
                   className={
-                    'group relative flex items-center justify-between px-3 py-2.5 rounded-xl mb-1 text-xs cursor-pointer transition-colors ' +
+                    'group relative flex items-center rounded-xl mb-1 text-xs transition-colors ' +
                     (isActive
                       ? 'bg-white/90 dark:bg-slate-700/70 shadow-sm border border-sky-200/70 dark:border-sky-700/40 text-slate-900 dark:text-slate-100 font-medium'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-white/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent')
+                      : 'hover:bg-white/70 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent')
                   }
                 >
-                  <div className="flex items-center space-x-2 truncate min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchSession(session.session_id)}
+                    className="flex-1 min-w-0 flex items-center space-x-2 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 rounded-xl"
+                  >
                     <span
                       className={`material-symbols-outlined text-base flex-shrink-0 ${isActive ? 'text-sky-600 dark:text-sky-300' : 'text-slate-400 group-hover:text-slate-600'}`}
                     >
@@ -241,9 +275,9 @@ export default function Sidebar({ onClose }) {
                     <span className="truncate" title={session.name}>
                       {session.name}
                     </span>
-                  </div>
+                  </button>
 
-                  <div className="flex items-center space-x-1 pl-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center space-x-1 pl-1.5 pr-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
@@ -272,6 +306,47 @@ export default function Sidebar({ onClose }) {
             })}
           </div>
         ))}
+      </div>
+
+      {/* Uploaded documents for this session */}
+      <div className="pt-3 border-t border-slate-200/60 dark:border-slate-700/60" data-purpose="session-documents">
+        <div className="flex items-center space-x-1.5 mb-2 px-1">
+          <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm">folder</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            Documents
+          </span>
+        </div>
+        {docError && <p className="text-rose-600 dark:text-rose-400 text-[11px] px-1 mb-1">{docError}</p>}
+        {documents.length === 0 ? (
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 px-1">
+            No documents uploaded yet.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+            {documents.map((doc) => (
+              <div
+                key={doc.filename}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/75 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/70 text-[11px] text-slate-700 dark:text-slate-300"
+              >
+                <span className="flex items-center space-x-1.5 truncate min-w-0">
+                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-300 text-sm flex-shrink-0">
+                    description
+                  </span>
+                  <span className="truncate" title={doc.filename}>{doc.filename}</span>
+                  <span className="text-slate-400 dark:text-slate-500 flex-shrink-0 ml-1">({doc.chunks})</span>
+                </span>
+                <button
+                  onClick={() => handleDeleteDocument(doc.filename)}
+                  title="Remove document"
+                  className="ml-2 p-0.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors flex-shrink-0"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-[13px] leading-none">close</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Cross-Session Memory */}
