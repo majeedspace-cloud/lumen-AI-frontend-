@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { streamChat, getSessionId, getSessionDetail } from '../api.js'
-import LumenLogo from './LumenLogo.jsx'
+import BrandMark from './BrandMark.jsx'
 
 export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
   const [messages, setMessages] = useState([])
@@ -186,22 +186,27 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
   }
 
   return (
-    <main className="flex-1 flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-[#0e0e14] via-[#0a0a0f] to-[#07070b]">
+    <main
+      className="flex-1 flex flex-col relative overflow-hidden rounded-3xl frosted-glass-panel prismatic-border"
+      data-purpose="chat-stream-workspace"
+    >
       {!sidebarOpen && (
         <button
           onClick={onOpenSidebar}
           title="Show conversations"
-          className="absolute top-4 left-4 z-10 p-2 rounded-lg bg-surface-container-high/70 hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/30 backdrop-blur-md transition-colors text-sm"
+          className="absolute top-4 left-4 z-10 p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 shadow-sm text-sm backdrop-blur transition-colors"
         >
-          »
+          <span className="material-symbols-outlined text-lg leading-none">menu</span>
         </button>
       )}
-      <div className="flex-1 overflow-y-auto px-6 py-8 space-y-7 scroll-smooth">
-        <div className="max-w-3xl mx-auto space-y-7 pb-6">
+
+      {/* Chat message history */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5">
+        <div className="max-w-3xl mx-auto space-y-6 pb-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-4 pt-24 text-center">
-              <LumenLogo size={56} />
-              <p className="text-on-surface-variant text-body-md font-body-md">
+              <BrandMark className="w-16 h-16 rounded-3xl shadow-xl shadow-sky-200/60" iconClass="w-9 h-9" />
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
                 Ask a question about your document, or just say hi.
               </p>
             </div>
@@ -211,28 +216,26 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
             const isLast = i === messages.length - 1
             const isActiveAnswer = isLast && msg.role === 'assistant' && isStreaming
             return msg.role === 'user' ? (
-              <div key={i} className="flex justify-end">
-                <div className="max-w-[80%] rounded-2xl rounded-tr-sm px-5 py-3.5 bg-surface-container-high/50 backdrop-blur-xl border border-white/10 text-on-surface shadow-md">
-                  <p className="text-body-md font-body-md leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+              <div key={i} className="flex justify-end" data-purpose="user-message">
+                <div className="max-w-[72%] px-5 py-3.5 rounded-2xl rounded-tr-sm bg-white/95 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 text-sm leading-relaxed shadow-sm border border-white/90 dark:border-slate-700 whitespace-pre-wrap">
+                  {msg.text}
                 </div>
               </div>
             ) : (
-              <div key={i} className="flex items-start gap-4">
-                <div className="w-8 h-8 shrink-0 mt-0.5">
-                  <LumenLogo size={32} active={isActiveAnswer} />
-                </div>
-                <div
-                  className={
-                    'flex-1 rounded-2xl bg-surface-container/60 backdrop-blur-2xl border border-white/5 p-5 shadow-lg space-y-3 min-w-0' +
-                    (isActiveAnswer ? ' prism-active-border' : '')
-                  }
-                >
+              <div key={i} className="flex justify-start" data-purpose="assistant-message">
+                <div className="max-w-[86%] rounded-2xl rounded-tl-sm bg-white/80 dark:bg-slate-800/80 p-5 border border-white/80 dark:border-slate-700/80 shadow-sm space-y-3 prismatic-subtle min-w-0">
                   {statusText && isActiveAnswer && !msg.text ? (
-                    <span className="text-on-surface-variant text-body-sm font-body-sm italic">{statusText}</span>
+                    <div className="flex items-center space-x-2 text-xs font-medium text-sky-800 dark:text-sky-200 bg-sky-50/70 dark:bg-sky-900/30 px-3 py-1.5 rounded-xl border border-sky-200/60 dark:border-sky-700/50 w-fit">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                      </span>
+                      <span>{statusText}</span>
+                    </div>
                   ) : (
-                    <div className="text-body-md font-body-md text-on-surface/90 leading-relaxed">
+                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                       <ReactMarkdown
-                        className="markdown-body [&_strong]:text-secondary [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:pl-4 [&_ul]:space-y-1 [&_code]:bg-black/30 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded"
+                        className="markdown-body"
                         remarkPlugins={[remarkGfm]}
                       >
                         {msg.text}
@@ -241,24 +244,30 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
                   )}
 
                   {msg.sources && (msg.sources.pdf.length > 0 || msg.sources.web.length > 0) && (
-                    <div className="pt-3 border-t border-outline-variant/20 flex flex-wrap items-center gap-2">
-                      <span className="text-label-sm font-label-sm uppercase tracking-wider text-outline">
-                        Sources:
+                    <div className="pt-3 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        Sources
                       </span>
                       {msg.sources.pdf.map((s) => (
                         <span
                           key={s}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-secondary/10 border border-secondary/35 amber-fragment-glow text-[11px] font-semibold uppercase text-secondary tracking-wide"
+                          className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200/70 dark:border-amber-700/50 text-[11px] font-medium text-amber-800 dark:text-amber-200 amber-fragment-glow"
                         >
-                          📄 {s}
+                          <span className="material-symbols-outlined text-xs text-amber-600 dark:text-amber-300 leading-none">
+                            picture_as_pdf
+                          </span>
+                          <span className="truncate max-w-[160px]">{s}</span>
                         </span>
                       ))}
                       {msg.sources.web.map((s, idx) => (
                         <span
                           key={idx}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-container/15 border border-primary/35 cyan-fragment-glow text-[11px] font-semibold uppercase text-primary tracking-wide"
+                          className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-sky-50 dark:bg-sky-900/30 border border-sky-200/70 dark:border-sky-700/50 text-[11px] font-medium text-sky-800 dark:text-sky-200 cyan-fragment-glow"
                         >
-                          🌐 {s.title}
+                          <span className="material-symbols-outlined text-xs text-sky-600 dark:text-sky-300 leading-none">
+                            language
+                          </span>
+                          <span className="truncate max-w-[160px]">{s.title}</span>
                         </span>
                       ))}
                     </div>
@@ -272,41 +281,48 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
         </div>
       </div>
 
-      {/* Floating input bar */}
-      <div className="w-full px-6 pb-6 pt-2 shrink-0">
+      {/* Bottom input section */}
+      <div className="p-4 pt-2 flex-shrink-0" data-purpose="chat-input-controls">
         <div className="max-w-3xl mx-auto">
-          <div className="relative flex items-center bg-[#10101a]/90 backdrop-blur-3xl rounded-2xl border border-white/10 p-2 shadow-2xl shadow-black/80 focus-within:border-primary/50 focus-within:shadow-[0_0_25px_-5px_rgba(76,215,246,0.25)] transition-all">
+          <div className="flex items-center px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-white/80 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 prismatic-border space-x-3 transition-shadow">
             <button
               onClick={() => fileInputRef.current?.click()}
-              title="Upload PDF"
+              title="Attach a PDF document"
               disabled={!!uploadingFileName}
-              className="p-2.5 rounded-xl hover:bg-surface-container-highest/60 text-secondary hover:text-white transition-colors shrink-0 disabled:opacity-50"
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors flex-shrink-0 disabled:opacity-50"
+              type="button"
             >
-              📎
+              <span className="material-symbols-outlined text-xl leading-none">attach_file</span>
             </button>
+
             {uploadingFileName && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-secondary/15 border border-secondary/30 text-secondary text-xs font-mono mx-1 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                <span className="max-w-[140px] truncate">Uploading {uploadingFileName}...</span>
+              <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 text-xs text-amber-900 dark:text-amber-200 flex-shrink-0 font-medium" data-purpose="upload-progress">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <span className="material-symbols-outlined text-sm text-amber-600 dark:text-amber-300">description</span>
+                <span className="truncate max-w-[140px]">Uploading {uploadingFileName}...</span>
               </div>
             )}
+
             <input
               type="text"
-              placeholder="Ask a question..."
+              placeholder="Ask across documents and live web intelligence..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isStreaming}
-              className="flex-1 bg-transparent border-none text-on-surface placeholder-outline font-body-md text-body-md focus:ring-0 focus:outline-none px-2 py-2 disabled:opacity-50"
+              className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-1 py-1 disabled:opacity-50"
             />
+
             <button
               onClick={handleSend}
               disabled={isStreaming || !input.trim()}
-              className="w-10 h-10 rounded-xl bg-surface-container-high hover:bg-surface-container-highest border border-white/10 hover:border-white/20 flex items-center justify-center text-on-surface shadow-md active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-900 dark:bg-sky-500 hover:bg-slate-800 dark:hover:bg-sky-400 text-white shadow-sm transition-all duration-150 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
               title="Send message"
+              type="button"
             >
-              ↑
+              <span className="material-symbols-outlined text-lg leading-none">arrow_upward</span>
             </button>
+
             <input
               ref={fileInputRef}
               type="file"
@@ -315,14 +331,23 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
               style={{ display: 'none' }}
             />
           </div>
-          <div className="flex items-center justify-center gap-3 px-3 pt-2 text-[10px] font-label-sm tracking-wider text-outline">
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Document
+
+          {/* Semantic color-coding caption */}
+          <div
+            className="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500 tracking-normal flex items-center justify-center space-x-3"
+            data-purpose="status-caption"
+          >
+            <span className="flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <span>Amber: Verified Internal Doc</span>
             </span>
-            <span className="text-outline/40">|</span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Live web
+            <span>•</span>
+            <span className="flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+              <span>Cyan: Live Web Stream</span>
             </span>
+            <span>|</span>
+            <span className="font-medium text-slate-500 dark:text-slate-400">Lumen RAG Assistant</span>
           </div>
         </div>
       </div>
