@@ -131,7 +131,7 @@ export default function Sidebar({ onClose }) {
   }
 
   async function handleClearMemory() {
-    if (!confirm('Clear everything Lumen remembers about you?')) return
+    if (!confirm('Clear everything Lex remembers about you?')) return
     try {
       await clearMemory()
       await refreshMemory()
@@ -209,7 +209,7 @@ export default function Sidebar({ onClose }) {
       {/* Header row + collapse */}
       <div className="flex items-center justify-between px-1 mb-3">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          Lumen AI
+          Lex Bot
         </span>
         <button
           onClick={onClose}
@@ -223,7 +223,7 @@ export default function Sidebar({ onClose }) {
       {/* New Chat trigger */}
       <button
         onClick={handleNewChat}
-        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white/85 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm border border-white dark:border-slate-700 shadow-sm transition-all duration-150 group soft-glow"
+        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white/85 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm border border-white dark:border-slate-700 shadow-sm transition-all duration-150 group soft-glow hover:shadow-md active:scale-[0.98] cursor-pointer"
         type="button"
       >
         <div className="flex items-center space-x-2">
@@ -265,7 +265,7 @@ export default function Sidebar({ onClose }) {
                   <button
                     type="button"
                     onClick={() => handleSwitchSession(session.session_id)}
-                    className="flex-1 min-w-0 flex items-center space-x-2 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 rounded-xl"
+                    className="flex-1 min-w-0 flex items-center space-x-2 px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 rounded-xl active:scale-[0.99] transition-transform duration-100 cursor-pointer"
                   >
                     <span
                       className={`material-symbols-outlined text-base flex-shrink-0 ${isActive ? 'text-sky-600 dark:text-sky-300' : 'text-slate-400 group-hover:text-slate-600'}`}
@@ -333,7 +333,7 @@ export default function Sidebar({ onClose }) {
                     description
                   </span>
                   <span className="truncate" title={doc.filename}>{doc.filename}</span>
-                  <span className="text-slate-400 dark:text-slate-500 flex-shrink-0 ml-1">({doc.chunks})</span>
+                  <span className="text-slate-400 dark:text-slate-500 flex-shrink-0 ml-1 tabular-nums">({doc.chunks})</span>
                 </span>
                 <button
                   onClick={() => handleDeleteDocument(doc.filename)}

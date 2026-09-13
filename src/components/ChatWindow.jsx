@@ -4,6 +4,13 @@ import remarkGfm from 'remark-gfm'
 import { streamChat, getSessionId, getSessionDetail } from '../api.js'
 import LumenLogo from './LumenLogo.jsx'
 
+const EXAMPLE_PROMPTS = [
+  'Summarize my uploaded documents',
+  'What are the key findings?',
+  'Compare the main themes across files',
+  'Extract action items from these notes',
+]
+
 export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -66,11 +73,11 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
     loadSessionHistory(currentSessionId)
   }, [])
 
-  async function handleSend() {
-    const query = input.trim()
+  async function handleSend(overrideQuery) {
+    const query = (overrideQuery ?? input).trim()
     if (!query || isStreaming) return
 
-    setInput('')
+    if (!overrideQuery) setInput('')
     setIsStreaming(true)
     setStatusText(null)
     const requestId = ++chatRequestRef.current
@@ -210,13 +217,25 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
 
       {/* Chat message history */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5">
-        <div className="max-w-3xl mx-auto space-y-6 pb-4">
+        <div className="max-w-[70ch] mx-auto space-y-4 pb-4">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-4 pt-24 text-center">
+            <div className="flex flex-col items-center justify-center gap-5 pt-20 text-center px-2">
               <LumenLogo size={56} />
               <p className="text-slate-500 dark:text-slate-400 text-sm">
-                Ask a question about your document, or just say hi.
+                Ask a question about your documents, or just say hi.
               </p>
+              <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
+                {EXAMPLE_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleSend(prompt)}
+                    type="button"
+                    className="text-xs px-3 py-1.5 rounded-full bg-white/85 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/70 text-slate-600 dark:text-slate-300 shadow-sm hover:border-sky-300 dark:hover:border-sky-600/60 hover:text-sky-700 dark:hover:text-sky-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] transition-all duration-150 cursor-pointer"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -266,6 +285,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
                           key={s}
                           className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200/70 dark:border-amber-700/50 text-[11px] font-medium text-amber-800 dark:text-amber-200 amber-fragment-glow"
                         >
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-300 flex-shrink-0" />
                           <span className="material-symbols-outlined text-xs text-amber-600 dark:text-amber-300 leading-none">
                             picture_as_pdf
                           </span>
@@ -277,6 +297,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
                           key={idx}
                           className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-sky-50 dark:bg-sky-900/30 border border-sky-200/70 dark:border-sky-700/50 text-[11px] font-medium text-sky-800 dark:text-sky-200 cyan-fragment-glow"
                         >
+                          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 dark:bg-sky-300 flex-shrink-0" />
                           <span className="material-symbols-outlined text-xs text-sky-600 dark:text-sky-300 leading-none">
                             language
                           </span>
@@ -360,7 +381,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
               <span>Cyan: Live Web Stream</span>
             </span>
             <span>|</span>
-            <span className="font-medium text-slate-500 dark:text-slate-400">Lumen RAG Assistant</span>
+            <span className="font-medium text-slate-500 dark:text-slate-400">Lex Bot</span>
           </div>
         </div>
       </div>

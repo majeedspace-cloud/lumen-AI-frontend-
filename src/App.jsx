@@ -39,7 +39,7 @@ export default function App() {
           <div className="flex items-center space-x-2.5">
             <LumenLogo size={32} />
             <div className="flex items-baseline space-x-1">
-              <span className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Lumen</span>
+              <span className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Lex</span>
               <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-amber-500 inline-block animate-pulse" />
             </div>
           </div>

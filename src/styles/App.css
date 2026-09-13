@@ -224,3 +224,9 @@ html.dark .markdown-body a {
 .toast-in {
   animation: toastIn 0.25s ease-out;
 }
+
+/* ---------------- Numerals & interaction helpers ---------------- */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
