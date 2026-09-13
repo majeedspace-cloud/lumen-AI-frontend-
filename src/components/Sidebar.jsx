@@ -10,7 +10,7 @@ import {
   clearMemory,
 } from '../api.js'
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
   const [sessions, setSessions] = useState([])
   const [error, setError] = useState(null)
   const [currentSessionId, setCurrentSessionId] = useState(getSessionId())
@@ -135,9 +135,18 @@ export default function Sidebar() {
       <div className="flex flex-col gap-4 overflow-hidden flex-1">
         {/* Header + New Chat */}
         <div className="flex flex-col gap-3">
-          <h2 className="font-headline-sm text-headline-sm font-semibold tracking-wide text-on-surface px-1">
-            Lumen AI
-          </h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="font-headline-sm text-headline-sm font-semibold tracking-wide text-on-surface">
+              Lumen AI
+            </h2>
+            <button
+              onClick={onClose}
+              title="Collapse sidebar"
+              className="p-1 text-on-surface-variant hover:text-on-surface rounded text-sm"
+            >
+              «
+            </button>
+          </div>
           <button
             onClick={handleNewChat}
             title="Start a new conversation"
@@ -197,7 +206,7 @@ export default function Sidebar() {
                       title="Delete conversation"
                       className="p-1 text-on-surface-variant hover:text-error rounded text-xs"
                     >
-                      ✕
+                      🗑️
                     </button>
                   </div>
                 </li>

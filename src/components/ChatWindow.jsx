@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm'
 import { streamChat, getSessionId, getSessionDetail } from '../api.js'
 import LumenLogo from './LumenLogo.jsx'
 
-export default function ChatWindow() {
+export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [statusText, setStatusText] = useState(null) // the "Searching your document..." line
@@ -187,6 +187,15 @@ export default function ChatWindow() {
 
   return (
     <main className="flex-1 flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-[#0e0e14] via-[#0a0a0f] to-[#07070b]">
+      {!sidebarOpen && (
+        <button
+          onClick={onOpenSidebar}
+          title="Show conversations"
+          className="absolute top-4 left-4 z-10 p-2 rounded-lg bg-surface-container-high/70 hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/30 backdrop-blur-md transition-colors text-sm"
+        >
+          »
+        </button>
+      )}
       <div className="flex-1 overflow-y-auto px-6 py-8 space-y-7 scroll-smooth">
         <div className="max-w-3xl mx-auto space-y-7 pb-6">
           {messages.length === 0 && (
@@ -198,8 +207,10 @@ export default function ChatWindow() {
             </div>
           )}
 
-          {messages.map((msg, i) =>
-            msg.role === 'user' ? (
+          {messages.map((msg, i) => {
+            const isLast = i === messages.length - 1
+            const isActiveAnswer = isLast && msg.role === 'assistant' && isStreaming
+            return msg.role === 'user' ? (
               <div key={i} className="flex justify-end">
                 <div className="max-w-[80%] rounded-2xl rounded-tr-sm px-5 py-3.5 bg-surface-container-high/50 backdrop-blur-xl border border-white/10 text-on-surface shadow-md">
                   <p className="text-body-md font-body-md leading-relaxed whitespace-pre-wrap">{msg.text}</p>
@@ -208,17 +219,26 @@ export default function ChatWindow() {
             ) : (
               <div key={i} className="flex items-start gap-4">
                 <div className="w-8 h-8 shrink-0 mt-0.5">
-                  <LumenLogo size={32} />
+                  <LumenLogo size={32} active={isActiveAnswer} />
                 </div>
-                <div className="flex-1 rounded-2xl bg-surface-container/60 backdrop-blur-2xl border border-white/5 p-5 shadow-lg space-y-3 min-w-0">
-                  <div className="text-body-md font-body-md text-on-surface/90 leading-relaxed">
-                    <ReactMarkdown
-                      className="markdown-body [&_strong]:text-secondary [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:pl-4 [&_ul]:space-y-1 [&_code]:bg-black/30 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded"
-                      remarkPlugins={[remarkGfm]}
-                    >
-                      {msg.text}
-                    </ReactMarkdown>
-                  </div>
+                <div
+                  className={
+                    'flex-1 rounded-2xl bg-surface-container/60 backdrop-blur-2xl border border-white/5 p-5 shadow-lg space-y-3 min-w-0' +
+                    (isActiveAnswer ? ' prism-active-border' : '')
+                  }
+                >
+                  {statusText && isActiveAnswer && !msg.text ? (
+                    <span className="text-on-surface-variant text-body-sm font-body-sm italic">{statusText}</span>
+                  ) : (
+                    <div className="text-body-md font-body-md text-on-surface/90 leading-relaxed">
+                      <ReactMarkdown
+                        className="markdown-body [&_strong]:text-secondary [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:pl-4 [&_ul]:space-y-1 [&_code]:bg-black/30 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded"
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {msg.text}
+                      </ReactMarkdown>
+                    </div>
+                  )}
 
                   {msg.sources && (msg.sources.pdf.length > 0 || msg.sources.web.length > 0) && (
                     <div className="pt-3 border-t border-outline-variant/20 flex flex-wrap items-center gap-2">
@@ -246,18 +266,7 @@ export default function ChatWindow() {
                 </div>
               </div>
             )
-          )}
-
-          {statusText && (
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 shrink-0 mt-0.5">
-                <LumenLogo size={32} active />
-              </div>
-              <div className="rounded-2xl bg-surface-container/60 backdrop-blur-2xl border border-white/5 px-5 py-3.5 shadow-lg">
-                <span className="text-on-surface-variant text-body-sm font-body-sm italic">{statusText}</span>
-              </div>
-            </div>
-          )}
+          })}
 
           <div ref={messagesEndRef} />
         </div>

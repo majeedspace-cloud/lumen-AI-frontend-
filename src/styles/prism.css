@@ -29,3 +29,35 @@
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
+
+/* Rotating gradient border — wraps the assistant card while its answer is
+   actively being generated. @property registers --angle as an animatable
+   custom property (without this, browsers can't tween a value used inside
+   a conic-gradient() — it would just snap between states instead of
+   smoothly rotating). Supported in current Chrome/Edge/Safari; falls back
+   to a static border on older browsers, which is a fine degradation. */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.prism-active-border {
+  position: relative;
+}
+.prism-active-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--angle), #ffb95f, #ff79b4, #4cd7f6, #ffb95f);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: prismRotate 2.5s linear infinite;
+}
+@keyframes prismRotate {
+  to { --angle: 360deg; }
+}
