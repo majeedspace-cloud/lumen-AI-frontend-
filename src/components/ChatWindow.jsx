@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { streamChat, getSessionId, getSessionDetail } from '../api.js'
-import BrandMark from './BrandMark.jsx'
+import LumenLogo from './LumenLogo.jsx'
 
 export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
   const [messages, setMessages] = useState([])
@@ -187,7 +187,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
 
   return (
     <main
-      className="flex-1 flex flex-col relative overflow-hidden rounded-3xl frosted-glass-panel prismatic-border"
+      className="flex-1 flex flex-col relative overflow-hidden rounded-3xl frosted-glass-panel rgb-border"
       data-purpose="chat-stream-workspace"
     >
       {!sidebarOpen && (
@@ -205,7 +205,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
         <div className="max-w-3xl mx-auto space-y-6 pb-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-4 pt-24 text-center">
-              <BrandMark className="w-16 h-16 rounded-3xl shadow-xl shadow-sky-200/60" iconClass="w-9 h-9" />
+              <LumenLogo size={56} />
               <p className="text-slate-500 dark:text-slate-400 text-sm">
                 Ask a question about your document, or just say hi.
               </p>
@@ -223,7 +223,12 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
               </div>
             ) : (
               <div key={i} className="flex justify-start" data-purpose="assistant-message">
-                <div className="max-w-[86%] rounded-2xl rounded-tl-sm bg-white/80 dark:bg-slate-800/80 p-5 border border-white/80 dark:border-slate-700/80 shadow-sm space-y-3 prismatic-subtle min-w-0">
+                <div
+                  className={
+                    'max-w-[86%] rounded-2xl rounded-tl-sm bg-white/80 dark:bg-slate-800/80 p-5 border border-white/80 dark:border-slate-700/80 shadow-sm space-y-3 prismatic-subtle min-w-0' +
+                    (isActiveAnswer ? ' rgb-border rgb-border-loading' : '')
+                  }
+                >
                   {statusText && isActiveAnswer && !msg.text ? (
                     <div className="flex items-center space-x-2 text-xs font-medium text-sky-800 dark:text-sky-200 bg-sky-50/70 dark:bg-sky-900/30 px-3 py-1.5 rounded-xl border border-sky-200/60 dark:border-sky-700/50 w-fit">
                       <span className="relative flex h-2 w-2">
@@ -284,7 +289,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
       {/* Bottom input section */}
       <div className="p-4 pt-2 flex-shrink-0" data-purpose="chat-input-controls">
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-white/80 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 prismatic-border space-x-3 transition-shadow">
+          <div className="flex items-center px-3.5 py-2 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-white/80 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-black/20 rgb-border space-x-3 transition-shadow">
             <button
               onClick={() => fileInputRef.current?.click()}
               title="Attach a PDF document"

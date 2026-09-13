@@ -64,7 +64,20 @@ export default function Sidebar({ onClose }) {
     }
 
     window.addEventListener('chat-completed', handleChatCompleted)
-    return () => window.removeEventListener('chat-completed', handleChatCompleted)
+
+    // Ctrl/Cmd+K starts a new chat — matches the "Ctrl K" hint on the button
+    const handleGlobalKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        handleNewChat()
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+
+    return () => {
+      window.removeEventListener('chat-completed', handleChatCompleted)
+      window.removeEventListener('keydown', handleGlobalKeyDown)
+    }
   }, [])
 
   async function refreshMemory() {
@@ -159,7 +172,7 @@ export default function Sidebar({ onClose }) {
 
   return (
     <aside
-      className="w-[290px] flex-shrink-0 flex flex-col rounded-3xl frosted-glass-panel prismatic-border p-4 overflow-hidden"
+      className="w-[290px] flex-shrink-0 flex flex-col rounded-3xl frosted-glass-panel rgb-border p-4 overflow-hidden"
       data-purpose="sidebar-navigation"
     >
       {/* Header row + collapse */}

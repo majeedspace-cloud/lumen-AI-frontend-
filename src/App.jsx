@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Sidebar from './components/Sidebar.jsx'
 import ChatWindow from './components/ChatWindow.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
-import BrandMark from './components/BrandMark.jsx'
+import LumenLogo from './components/LumenLogo.jsx'
 
 // Soft-focus daylight backdrop: architectural photo, luminous washes,
 // gradient blooms and a faint dot grid — all pointer-transparent and
@@ -33,11 +33,11 @@ export default function App() {
       <div className="app-shell relative z-10 flex flex-col h-screen max-w-[1440px] mx-auto px-4 py-3 md:px-6 md:py-4">
         {/* Top bar */}
         <header
-          className="flex items-center justify-between h-14 px-6 rounded-2xl frosted-glass-panel prismatic-border mb-3.5 flex-shrink-0"
+          className="flex items-center justify-between h-14 px-6 rounded-2xl frosted-glass-panel rgb-border mb-3.5 flex-shrink-0"
           data-purpose="top-navigation"
         >
           <div className="flex items-center space-x-2.5">
-            <BrandMark />
+            <LumenLogo size={32} />
             <div className="flex items-baseline space-x-1">
               <span className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Lumen</span>
               <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-amber-500 inline-block animate-pulse" />

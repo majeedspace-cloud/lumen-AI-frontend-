@@ -136,21 +136,28 @@ html.dark .markdown-body a {
   font-size: 0.9em;
 }
 
-/* ---------------- Rotating RGB UI glow ---------------- */
+/* ---------------- Thin rotating RGB borders ---------------- */
+/* Add the .rgb-border class to any box (top bar, sidebar, chat panel,
+   input capsule, answer card...) to give it a thin RGB ring that rotates
+   continuously. @property registers --rgb-angle as an animatable angle so
+   the conic-gradient() actually rotates smoothly instead of snapping.
+   The ring inherits the box's own border-radius via `inset: 0` + the
+   content-box mask trick. */
 @property --rgb-angle {
   syntax: '<angle>';
   initial-value: 0deg;
   inherits: false;
 }
 
-.app-shell::before,
-.app-shell::after {
+.rgb-border {
+  position: relative;
+}
+.rgb-border::before {
   content: '';
   position: absolute;
   inset: 0;
-  z-index: 40;
-  pointer-events: none;
-  padding: 3px;
+  border-radius: inherit;
+  padding: 2px;
   background: conic-gradient(
     from var(--rgb-angle),
     #ff2d4b,
@@ -164,14 +171,14 @@ html.dark .markdown-body a {
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: rgbGlowRotate 5s linear infinite;
+  pointer-events: none;
+  animation: rgbGlowRotate 4s linear infinite;
 }
 
-.app-shell::after {
-  padding: 14px;
-  filter: blur(9px);
-  opacity: 0.45;
-  animation: rgbGlowRotate 9s linear infinite reverse;
+/* Faster, slightly brighter cycle used while an answer is loading. */
+.rgb-border-loading::before {
+  animation-duration: 1.6s;
+  filter: saturate(1.25);
 }
 
 @keyframes rgbGlowRotate {
