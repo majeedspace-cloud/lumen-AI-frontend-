@@ -2,6 +2,56 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+/* ---------------- Rotating RGB UI glow ----------------
+   A conic red->green->blue gradient ringed around the whole app frame,
+   continuously rotating. @property registers --rgb-angle as an animatable
+   angle so the conic-gradient() actually rotates smoothly instead of
+   snapping (same trick as prism.css's assistant-card border). */
+@property --rgb-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.app-shell::before,
+.app-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--rgb-angle),
+    #ff2d4b,
+    #ff8a2d,
+    #ffd52d,
+    #2dff6a,
+    #2ddbff,
+    #6a2dff,
+    #ff2d4b
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rgbGlowRotate 5s linear infinite;
+}
+
+/* Soft bloom layer: same ring but wider, blurred and dimmer, so the
+   rotating edge has a neon halo instead of a hard line. Opposite
+   direction + slower speed adds depth. */
+.app-shell::after {
+  padding: 14px;
+  filter: blur(9px);
+  opacity: 0.45;
+  animation: rgbGlowRotate 9s linear infinite reverse;
+}
+
+@keyframes rgbGlowRotate {
+  to { --rgb-angle: 360deg; }
 }
 
 .app-header {
