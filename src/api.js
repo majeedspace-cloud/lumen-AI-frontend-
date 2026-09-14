@@ -44,6 +44,7 @@ export function getDeviceId() {
 export async function uploadDocument(file) {
   const formData = new FormData()
   formData.append('session_id', getSessionId())
+  formData.append('device_id', getDeviceId())
   formData.append('file', file)
 
   const res = await fetch(`${API_BASE}/upload`, { method: 'POST', headers: authHeaders(), body: formData })
@@ -55,7 +56,7 @@ export async function uploadDocument(file) {
 }
 
 export async function listDocuments() {
-  const res = await fetch(`${API_BASE}/documents?session_id=${getSessionId()}`, { headers: authHeaders() })
+  const res = await fetch(`${API_BASE}/documents?session_id=${getSessionId()}&device_id=${getDeviceId()}`, { headers: authHeaders() })
   if (!res.ok) throw new Error(`Failed to load documents (${res.status})`)
   const data = await res.json()
   return data.documents
@@ -63,7 +64,7 @@ export async function listDocuments() {
 
 export async function deleteDocument(filename) {
   const res = await fetch(
-    `${API_BASE}/documents/${encodeURIComponent(filename)}?session_id=${getSessionId()}`,
+    `${API_BASE}/documents/${encodeURIComponent(filename)}?session_id=${getSessionId()}&device_id=${getDeviceId()}`,
     { method: 'DELETE', headers: authHeaders() }
   )
   if (!res.ok) {
@@ -76,7 +77,7 @@ export async function deleteDocument(filename) {
 // ---------------- Session Management Functions ----------------
 
 export async function listSessions() {
-  const res = await fetch(`${API_BASE}/sessions`, { headers: authHeaders() })
+  const res = await fetch(`${API_BASE}/sessions?device_id=${getDeviceId()}`, { headers: authHeaders() })
   if (!res.ok) throw new Error(`Failed to load sessions (${res.status})`)
   const data = await res.json()
   return data.sessions
@@ -86,7 +87,7 @@ export async function createSession(name = 'New Chat') {
   const res = await fetch(`${API_BASE}/sessions`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, device_id: getDeviceId() }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -96,7 +97,7 @@ export async function createSession(name = 'New Chat') {
 }
 
 export async function renameSession(sessionId, newName) {
-  const res = await fetch(`${API_BASE}/sessions/${sessionId}/rename`, {
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}/rename?device_id=${getDeviceId()}`, {
     method: 'PUT',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ new_name: newName }),
@@ -109,7 +110,7 @@ export async function renameSession(sessionId, newName) {
 }
 
 export async function deleteSession(sessionId) {
-  const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}?device_id=${getDeviceId()}`, {
     method: 'DELETE',
     headers: authHeaders(),
   })
@@ -121,7 +122,7 @@ export async function deleteSession(sessionId) {
 }
 
 export async function getSessionDetail(sessionId) {
-  const res = await fetch(`${API_BASE}/sessions/${sessionId}`, { headers: authHeaders() })
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}?device_id=${getDeviceId()}`, { headers: authHeaders() })
   if (!res.ok) throw new Error(`Failed to load session details (${res.status})`)
   return res.json()
 }

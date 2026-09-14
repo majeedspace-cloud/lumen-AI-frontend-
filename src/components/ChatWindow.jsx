@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { streamChat, getSessionId, getSessionDetail } from '../api.js'
+import { streamChat, getSessionId, getDeviceId, getSessionDetail } from '../api.js'
 import LumenLogo from './LumenLogo.jsx'
 
 const EXAMPLE_PROMPTS = [
@@ -165,6 +165,7 @@ export default function ChatWindow({ sidebarOpen, onOpenSidebar }) {
       setUploadingFileName(file.name)
       const formData = new FormData()
       formData.append('session_id', getSessionId())
+      formData.append('device_id', getDeviceId())
       formData.append('file', file)
 
       const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000') + '/api/v1'
