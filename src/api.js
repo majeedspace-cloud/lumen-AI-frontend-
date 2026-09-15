@@ -100,7 +100,7 @@ export async function renameSession(sessionId, newName) {
   const res = await fetch(`${API_BASE}/sessions/${sessionId}/rename?device_id=${getDeviceId()}`, {
     method: 'PUT',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ new_name: newName }),
+    body: JSON.stringify({ new_name: newName, device_id: getDeviceId() }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
